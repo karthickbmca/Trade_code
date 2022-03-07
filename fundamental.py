@@ -14,7 +14,7 @@ from IPython.core.display import HTML
 
 #driver1 = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
 
-file_name = 'profit_share_two_days27102021'
+file_name = 'profit_share_two_days25112021'
 output_name = 'fundamental_analysis'
 funda_analysis = {}
 inc = 1
@@ -89,4 +89,4 @@ for symbol in df['Symbol'].tolist():
     inc = inc + 1           
 dff = pd.DataFrame.from_dict(funda_analysis, orient = 'index')
 dff.columns = ['high_low_ratio','high_low_avg','p_b','div_yld','debt']
-dff.to_excel(r'D:\Trade\Analysis\\' + output_name +'271021.xlsx')
+dff.to_excel(r'D:\Trade\Analysis\\' + output_name +'251121.xlsx')

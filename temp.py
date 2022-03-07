@@ -57,6 +57,8 @@ def is_bullish_eng(tod_open,tod_close,yes_open,yes_clos):
     
     
 data = pd.DataFrame()
+leave = [datetime.date(2022,1,26)]
+
 dic_profit_shares = {}
 
 end = datetime.date.today()
@@ -72,6 +74,9 @@ if datetime.datetime.today().weekday() == 1:
     yes_date = end - timedelta(days = 1)
 else:
     yes_date = start + timedelta(days = 1)
+
+if yes_date in leave:
+    yes_date = yes_date + timedelta(days = 1)
 nse = Nse()
 #q = nse.get_quote('infy')
 all_stock_codes = nse.get_stock_codes() 
@@ -99,12 +104,13 @@ data['spinng_top'] = talib.CDLSPINNINGTOP(data['Open'].values, data['High'].valu
 data.to_excel("D:\Trade\Raw_data\\data" + end.strftime('%Y-%m-%d') + ".xlsx")
 print('data is stored for today---' + end.strftime('%Y-%m-%d') )
 data = pd.read_excel(r'D:\Trade\Raw_data\\data' + end.strftime('%Y-%m-%d') + '.xlsx')
-df_spintop = data[(data['Date'] == end.strftime('%Y-%m-%d')) & (data['spinng_top'] != 0) ]
-df_spintop.to_excel("D:\Trade\Analysis\\data_spingtop" + end.strftime('%Y-%m-%d') + ".xlsx")
+#df_spintop = data[(data['Date'] == end.strftime('%Y-%m-%d')) & (data['spinng_top'] != 0) ]
+#df_spintop.to_excel("D:\Trade\Analysis\\data_spingtop" + end.strftime('%Y-%m-%d') + ".xlsx")
 
 stocks = list(data[data['Date'] ==  end.strftime('%Y-%m-%d')]['Symbol'])
 print('Total stocks for today' + str(len(stocks)))
 
+#yes_date = datetime.date(2022,3,2)
 for e_st in stocks:
     try:
         yes_clos = float(data[(data['Date'] == yes_date.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['Close'])
@@ -115,6 +121,19 @@ for e_st in stocks:
         dbf_close = float(data[(data['Date'] == start.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['Close'])
         
         result = tod_close - yes_clos
+        result1 = yes_clos - dbf_close
+        
+        if (result >= 0) and (str(data[(data['Date'] ==  end.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['type_candle']).split()[1] == 'bear'):
+            idx = str(data[(data['Date'] ==  end.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['type_candle']).split()[0]
+            data.at[int(idx),'type_candle'] =  'bull'
+            #print('today check',e_st)
+            
+        if (result1 >= 0) and (str(data[(data['Date'] ==  yes_date.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['type_candle']).split()[1] == 'bear'):
+            idx1 = str(data[(data['Date'] ==  yes_date.strftime('%Y-%m-%d')) & (data['Symbol'] == e_st)]['type_candle']).split()[0]
+            data.at[int(idx1),'type_candle'] =  'bull'
+            #print('yes_check',e_st)
+            
+        
         if result > 2:
             res_morning_star = morning_star(tod_open,tod_close,dbf_open,dbf_close,yes_open,yes_clos)
             res_bull_eng = is_bullish_eng(tod_open,tod_close,yes_open,yes_clos)
