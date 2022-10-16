@@ -17,15 +17,26 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from multiprocessing import Pool
 from multiprocessing import freeze_support
+import datetime
+from datetime import timedelta
+from nsetools import Nse
 
-df = pd.read_excel(r'C:\Users\KarthickB\Desktop\Trade\less_check070621.xlsx')
+end = datetime.date.today()
+end = end - timedelta(days = 1)
 
-list_stcoks = list(df['Symbol'])
+df = pd.read_excel(r'E:\Trade\Raw_data\data2022-07-19.xlsx')
+
+#list_stcoks = ['gepil']
 
 #list_stcoks  = ['orienthot']
 dic_stocks = {}
 
 
+def comma(val):
+    if ',' in val:
+        return val.replace(',','')
+    else:
+        return val
         
 
 # def scrape(url):
@@ -54,12 +65,19 @@ dic_stocks = {}
 #                 symbol=data_array[index].split('"')[1]
                 
 #             dic_stocks[symbol] = [latestPrice,open_amt,close_amt,dayHigh]
-            
+
+nse = Nse()
+#q = nse.get_quote('infy')
+all_stock_codes = nse.get_stock_codes() 
     
 for _ in range(1):
-    for stock_symbol in list_stcoks:
+    for stock_symbol in list(all_stock_codes)[1:]:
         
-        print(stock_symbol)
+        try:
+            vol = float(df[(df['Symbol'] == stock_symbol) & (df['Date'] ==  end.strftime('%Y-%m-%d'))]['Volume'])
+        except:
+            vol = 0
+        #print(stock_symbol)
         stock_url = 'https://www.nseindia.com/live_market/dynaContent/live_watch/get_quote/GetQuote.jsp?symbol='+str(stock_symbol)
         headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
         response = requests.get(stock_url, headers=headers)
@@ -85,21 +103,17 @@ for _ in range(1):
                      
                 elif 'totalTradedVolume' in item:
                     index = data_array.index(item)+1
-                    volume = data_array[index].split('"')[1]
+                    volume = float(comma(data_array[index].split('"')[1]))
                     
+                    today = volume - vol 
+                    if today >0:
+                        perc = (volume - vol)/vol*100
+                        if perc > 400:
+                            print(stock_symbol,perc)
+                    
+
             except:
                 continue
-        
             #if (latestPrice - high_price) > 0:
-        dic_stocks[stock_symbol] = [latestPrice,dayHigh,open_amt,low]
-            
-    
-    
-df_live = pd.DataFrame.from_dict(dic_stocks, orient = 'index')
-df_live.columns = ['Close','t_High','Open','Low']
-df_live['Date'] = df["Date"].values
-df_live['High'] = df["High"].values
-df_live['bef_high'] = df["bef_high"].values
-df_live['perc'] = df["perc"].values
-df_live.to_excel(r'C:\Users\KarthickB\Desktop\Trade\live_0706_6pm.xlsx')
+        #dic_stocks[stock_symbol] = [latestPrice,dayHigh,open_amt,low]
             

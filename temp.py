@@ -10,7 +10,10 @@ import datetime
 import numpy as np
 from datetime import timedelta
 import talib
-
+import pandas_ta as ta
+import os
+import pathlib
+import re
 import pandas as pd
 
 def isdoji(opn,clos):
@@ -56,27 +59,34 @@ def is_bullish_eng(tod_open,tod_close,yes_open,yes_clos):
             return True
     
     
+    
+def get_date(d):
+    yes_date = d-timedelta(days = 1)
+
+    if yes_date not in leave:
+        if yes_date.weekday() >=5:
+            dat = get_date(yes_date)
+        else:
+            dat = yes_date
+    else:
+        dat = get_date(yes_date)
+    
+    return dat
+        
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5)]
 
 dic_profit_shares = {}
-
+dic_stck = {}
 end = datetime.date.today()
 #end = end - timedelta(days = 1)
-if datetime.datetime.today().weekday() == 0:
-    start = end - timedelta(days = 4)
-elif datetime.datetime.today().weekday() == 1:
-    start = end - timedelta(days = 4)
-else:
-    start = end - timedelta(days = 2)
-    
-if datetime.datetime.today().weekday() == 1:
-    yes_date = end - timedelta(days = 1)
-else:
-    yes_date = start + timedelta(days = 1)
 
-if yes_date in leave:
-    yes_date = yes_date + timedelta(days = 1)
+yes_date = get_date(end)
+start = get_date(yes_date)
+print(start,yes_date,end)
+    #yes_date = yes_date + timedelta(days = 2)
+#yes_date = datetime.date(2022,8,16)
+#start = datetime.date(2022,9,12)
 nse = Nse()
 #q = nse.get_quote('infy')
 all_stock_codes = nse.get_stock_codes() 
@@ -101,10 +111,10 @@ data['spinng_top'] = talib.CDLSPINNINGTOP(data['Open'].values, data['High'].valu
 #df = pd.read_excel(r'C:\Users\KarthickB\Desktop\Trade\data2021-05-21oneweek.xlsx')
 #data = data.append(df)
 #data = data[['Symbol', 'Open', 'High', 'Low', 'Close', 'type_candle']]
-data.to_excel("D:\Trade\Raw_data\\data" + end.strftime('%Y-%m-%d') + ".xlsx")
+data.to_excel("E:\Trade\Raw_data\\data" + end.strftime('%Y-%m-%d') + ".xlsx")
 print('data is stored for today---' + end.strftime('%Y-%m-%d') )
-data = pd.read_excel(r'D:\Trade\Raw_data\\data' + end.strftime('%Y-%m-%d') + '.xlsx')
-#df_spintop = data[(data['Date'] == end.strftime('%Y-%m-%d')) & (data['spinng_top'] != 0) ]
+data = pd.read_excel(r'E:\Trade\Raw_data\\data' + end.strftime('%Y-%m-%d') + '.xlsx')
+list_spntop = list(data[(data['Date'] == end.strftime('%Y-%m-%d')) & (data['spinng_top'] != 0) ]['Symbol'])
 #df_spintop.to_excel("D:\Trade\Analysis\\data_spingtop" + end.strftime('%Y-%m-%d') + ".xlsx")
 
 stocks = list(data[data['Date'] ==  end.strftime('%Y-%m-%d')]['Symbol'])
@@ -157,15 +167,65 @@ for stc in two_day_stock:
             dic_two[stc] = [perc_tod,perc_yes,tod_clos]
     except:
         continue
-    
-                                                                           
+      
+uniq_spn_top = set(list_spntop)-set(list_today_stock)                                                                           
 df_profit = pd.DataFrame.from_dict(dic_profit_shares, orient = 'index')
 df_profit.columns = ['perc','yes_clos','tod_close','result','Morn_star','Bull_eng']
 df_profit.sort_values(by='perc', ascending=False,inplace=True)
-df_profit.to_excel(r'D:\Trade\Analysis\profit_share_' + end.strftime('%d%m%Y') +'.xlsx')
+sample_data = pd.read_csv('E:\Trade\Analysis\Equity.csv')
+data_eq = sample_data[['Security Id','ISubgroup Name']]
+data_eq['Security Id'] = data_eq['Security Id'].astype(str)
+df_profit.to_excel(r'E:\Trade\Analysis\profit_share_' + end.strftime('%d%m%Y') +'.xlsx')
+get_profit_data = pd.read_excel(r'E:\Trade\Analysis\profit_share_' + end.strftime('%d%m%Y') +'.xlsx')
+get_profit_data.columns = ['Security Id','perc','yes_clos','tod_close','result','Morn_star','Bull_eng']
+get_profit_data['Security Id'] = get_profit_data['Security Id'].astype(str)
+get_sector = get_profit_data.merge(data_eq,on =['Security Id'],how='left')[['Security Id','ISubgroup Name']]
+print(get_sector.groupby('ISubgroup Name').count().sort_values(by = ['Security Id'], ascending=False))
+
 df_two = pd.DataFrame.from_dict(dic_two, orient = 'index')
 df_two.columns = ['perc_today','perc_yesterday','result']
 df_two.sort_values(by='perc_today', ascending=False,inplace=True)
-df_two.to_excel(r'D:\Trade\Analysis\profit_share_two_days' + end.strftime('%d%m%Y') +'.xlsx')
+df_two.to_excel(r'E:\Trade\Analysis\profit_share_two_days' + end.strftime('%d%m%Y') +'.xlsx')
 print('profit data is stored for today---' + end.strftime('%Y-%m-%d') )   
 
+data_year = pd.read_excel("E:\Trade\Raw_data\\data_oneYear_EMA.xlsx")
+data_today = pd.read_excel("E:\Trade\Raw_data\\data"+end.strftime('%Y-%m-%d')+ ".xlsx")
+df_profit_two_days = pd.read_excel("E:\Trade\Analysis\profit_share_two_days"+end.strftime('%d%m%Y')+ ".xlsx")
+df_profit_two_days.columns = ['Stocks','perc_today','perc_yesterday','result']
+data_today = data_today[data_today['Date'] == end.strftime('%Y-%m-%d')]
+data_y = data_year.append(data_today)
+data_y = data_y.reset_index(drop=True)
+stock = df_profit_two_days['Stocks'].tolist()
+for stck in stock:
+    try:
+        slice_data = data_y[data_y['Symbol'] == stck]
+        twenty_ema = ta.ema(slice_data['Close'],length=20).to_list()[-1]
+        fifty_ema = ta.ema(slice_data['Close'],length=50).to_list()[-1]
+        hundred_ema = ta.ema(slice_data['Close'],length=100).to_list()[-1]
+        two_hund_ema = ta.ema(slice_data['Close'],length=200).to_list()[-1]
+        dic_stck[stck] = [twenty_ema,fifty_ema,hundred_ema,two_hund_ema]
+    except:
+        continue
+    
+df_emas = pd.DataFrame.from_dict(dic_stck, orient = 'index')
+df_emas.to_excel("E:\Trade\Analysis\\data_ema" + end.strftime('%Y-%m-%d') + ".xlsx")
+data = pd.read_excel(r'E:\Trade\Analysis\\data_ema' + end.strftime('%Y-%m-%d') + '.xlsx')
+data.columns = ['Stocks','20EMA','50EMA','100EMA','200EMA']
+total_data = df_profit_two_days.merge(data,on = ['Stocks'],how = 'left')
+total_data['ema_perc'] = (total_data['result']-total_data['200EMA'])/total_data['result']*100
+total_data['ema_flag'] = total_data['ema_perc'].apply(lambda row :'True' if row > -1 else 'False')
+total_data.to_excel(r'E:\Trade\Analysis\profit_share_two_days_ema' + end.strftime('%d%m%Y') +'.xlsx',index=False)
+#filt_data = total_data[total_data['ema_flag'] == 'True']
+filt_data = total_data.sort_values(by='perc_today')
+list_ema_stocks = filt_data['Stocks'].tolist()
+str_list = ','.join(list_ema_stocks)
+str_uniq_spn_top = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in uniq_spn_top})
+fil_dic = {'NSE:'+re.sub('[&-]','_',key):val for key,val in dic_profit_shares.items() if val[2]<=1000}
+profit_list = ','.join(dict(sorted(fil_dic.items(), key = lambda x: x[1][0], reverse = False)).keys())
+pathlib.Path(r"E:\Trade\2_days_ema\list_stocks" + end.strftime('%d%m%Y') +".txt").write_text(str_list)
+pathlib.Path(r"E:\Trade\profit_list\profit_stocks" + end.strftime('%d%m%Y') +".txt").write_text(profit_list)
+pathlib.Path(r"E:\Trade\spn_top\spn_top" + end.strftime('%d%m%Y') +".txt").write_text(str_uniq_spn_top)
+if os.path.exists('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx'):
+    os.remove('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx')
+data_y.to_excel('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx',index=False)
+print(len(fil_dic))
