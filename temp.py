@@ -74,7 +74,7 @@ def get_date(d):
     return dat
         
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8)]
 
 dic_profit_shares = {}
 dic_stck = {}
@@ -86,7 +86,7 @@ start = get_date(yes_date)
 print(start,yes_date,end)
     #yes_date = yes_date + timedelta(days = 2)
 #yes_date = datetime.date(2022,8,16)
-#start = datetime.date(2022,9,12)
+#start = datetime.date(2022,10,31)
 nse = Nse()
 #q = nse.get_quote('infy')
 all_stock_codes = nse.get_stock_codes() 
@@ -95,7 +95,7 @@ for stock in all_stock_codes:
         print(stock)
         df_data = get_history(symbol = stock, start = start, end = end)
         df_data['type_candle'] = df_data.apply(lambda row: 'bull' if (row['Close'] > row['Open']) else 'bear', axis = 1)
-        data = data.append(df_data) 
+        data = pd.concat([data,df_data]) 
     except:
         continue
 data['spinng_top'] = talib.CDLSPINNINGTOP(data['Open'].values, data['High'].values, data['Low'].values, data['Close'].values)
@@ -144,7 +144,7 @@ for e_st in stocks:
             #print('yes_check',e_st)
             
         
-        if result > 2:
+        if result >= 0:
             res_morning_star = morning_star(tod_open,tod_close,dbf_open,dbf_close,yes_open,yes_clos)
             res_bull_eng = is_bullish_eng(tod_open,tod_close,yes_open,yes_clos)
             perc = (result / yes_clos) * 100
@@ -178,6 +178,8 @@ data_eq['Security Id'] = data_eq['Security Id'].astype(str)
 df_profit.to_excel(r'E:\Trade\Analysis\profit_share_' + end.strftime('%d%m%Y') +'.xlsx')
 get_profit_data = pd.read_excel(r'E:\Trade\Analysis\profit_share_' + end.strftime('%d%m%Y') +'.xlsx')
 get_profit_data.columns = ['Security Id','perc','yes_clos','tod_close','result','Morn_star','Bull_eng']
+df_get_less_percent = get_profit_data[(get_profit_data['perc'] >=0) & (get_profit_data['perc'] <=1) & (get_profit_data['tod_close'] <=1000)]
+list_less_one = df_get_less_percent['Security Id'].tolist()
 get_profit_data['Security Id'] = get_profit_data['Security Id'].astype(str)
 get_sector = get_profit_data.merge(data_eq,on =['Security Id'],how='left')[['Security Id','ISubgroup Name']]
 print(get_sector.groupby('ISubgroup Name').count().sort_values(by = ['Security Id'], ascending=False))
@@ -218,14 +220,50 @@ total_data.to_excel(r'E:\Trade\Analysis\profit_share_two_days_ema' + end.strftim
 #filt_data = total_data[total_data['ema_flag'] == 'True']
 filt_data = total_data.sort_values(by='perc_today')
 list_ema_stocks = filt_data['Stocks'].tolist()
-str_list = ','.join(list_ema_stocks)
+less_than_one_perc = set(list_less_one).union(set(list_ema_stocks))
+shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in less_than_one_perc})
+str_list = ','.join(shares_top_prior)
 str_uniq_spn_top = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in uniq_spn_top})
 fil_dic = {'NSE:'+re.sub('[&-]','_',key):val for key,val in dic_profit_shares.items() if val[2]<=1000}
 profit_list = ','.join(dict(sorted(fil_dic.items(), key = lambda x: x[1][0], reverse = False)).keys())
-pathlib.Path(r"E:\Trade\2_days_ema\list_stocks" + end.strftime('%d%m%Y') +".txt").write_text(str_list)
+pathlib.Path(r"E:\Trade\2_days_ema\list_stocks" + end.strftime('%d%m%Y') +".txt").write_text(shares_top_prior)
 pathlib.Path(r"E:\Trade\profit_list\profit_stocks" + end.strftime('%d%m%Y') +".txt").write_text(profit_list)
 pathlib.Path(r"E:\Trade\spn_top\spn_top" + end.strftime('%d%m%Y') +".txt").write_text(str_uniq_spn_top)
 if os.path.exists('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx'):
     os.remove('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx')
 data_y.to_excel('E:\Trade\Raw_data\\data_oneYear_EMA.xlsx',index=False)
+
+stock = data_y['Symbol'].drop_duplicates().tolist()
+
+interval = 4
+
+dates = data_y['Date'].drop_duplicates().to_list()[-(interval):]
+
+dates = dates[::-1]
+#stock = ['UNOMINDA']
+stc = []
+for stck in stock:
+    #print(stck)
+    l=[]
+    fil_stck = data_y[data_y['Symbol'] == stck]
+    try:
+        for d in range(len(dates)):
+            if d < interval-1:
+                cls1  = float(fil_stck[fil_stck['Date'] ==  dates[d].strftime('%Y-%m-%d')]['Close'])     
+                cls2  = float(fil_stck[(fil_stck['Date'] ==  dates[d+1].strftime('%Y-%m-%d'))]['Close'])
+                spn_top = int(fil_stck[fil_stck['Date'] ==  dates[d].strftime('%Y-%m-%d')]['spinng_top'])
+                res = cls1-cls2
+                perc=res/cls2*100
+                if ( 1 >= perc >= -1) | (spn_top !=0):
+                    l.append(perc)
+                
+        if len(l) >= 3 and cls1 <=1000:
+            print(stck)
+            stc.append(stck)
+    except:
+        pass        
+    
+watch_list = list(set(less_than_one_perc).union(set(stc))  )
+shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in watch_list})
+pathlib.Path(r"E:\Trade\watch_list\watch_list" + end.strftime('%d%m%Y') +".txt").write_text(shares_top_prior)
 print(len(fil_dic))

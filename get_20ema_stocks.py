@@ -14,12 +14,13 @@ from datetime import timedelta
 import pandas_ta as ta
 import os
 import pathlib
+import re
 
 import pandas as pd
 
 
 end = datetime.date.today()
-end = end - timedelta(days = 2)
+end = end - timedelta(days = 1)
 
 data_year = pd.read_excel("E:\Trade\Raw_data\\data_oneYear_EMA.xlsx")
 nse = Nse()
@@ -42,8 +43,8 @@ for stock in all_stock_codes:
                 
     except:
         continue
-    
-str_list = ','.join(l)
+str_list = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in l})
+#str_list = ','.join(str_uniq_spn_top)
 pathlib.Path(r"E:\Trade\2_days_ema\list_stocks_20_50_100_200_EMA_"+str(end)+".txt").write_text(str_list)
 
             
