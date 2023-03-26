@@ -74,12 +74,12 @@ def get_date(d):
     return dat
         
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7)]
 
 dic_profit_shares = {}
 dic_stck = {}
 end = datetime.date.today()
-#end = end - timedelta(days = 1)
+#end = end - timedelta(days = 2)
 
 yes_date = get_date(end)
 start = get_date(yes_date)
@@ -266,4 +266,5 @@ for stck in stock:
 watch_list = list(set(less_than_one_perc).union(set(stc))  )
 shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in watch_list})
 pathlib.Path(r"E:\Trade\watch_list\watch_list" + end.strftime('%d%m%Y') +".txt").write_text(shares_top_prior)
-print(len(fil_dic))
+print('profit Stocks - '+str(len(fil_dic)))
+print('watch list stocks - '+ str(len(watch_list)))

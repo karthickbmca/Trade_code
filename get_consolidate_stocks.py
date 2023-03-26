@@ -18,7 +18,7 @@ data_year = pd.read_excel("E:\Trade\Raw_data\\data_oneYear_EMA.xlsx")
 end = datetime.date.today()
 stock = data_year['Symbol'].drop_duplicates().tolist()
 
-interval = 4
+interval = 5
 
 dates = data_year['Date'].drop_duplicates().to_list()[-(interval):]
 
@@ -30,19 +30,24 @@ for stck in stock:
     l=[]
     fil_stck = data_year[data_year['Symbol'] == stck]
     try:
+        clse = float(fil_stck[fil_stck['Date'] ==  dates[0].strftime('%Y-%m-%d')]['Close'])     
+        set_clse = set()
         for d in range(len(dates)):
             if d < interval-1:
                 cls1  = float(fil_stck[fil_stck['Date'] ==  dates[d].strftime('%Y-%m-%d')]['Close'])     
                 cls2  = float(fil_stck[(fil_stck['Date'] ==  dates[d+1].strftime('%Y-%m-%d'))]['Close'])
                 spn_top = int(fil_stck[fil_stck['Date'] ==  dates[d].strftime('%Y-%m-%d')]['spinng_top'])
+                set_clse.add(cls2)
                 res = cls1-cls2
                 perc=res/cls2*100
                 if ( 1 >= perc >= -1) | (spn_top !=0):
                     l.append(perc)
                 
         if len(l) >= 3 and cls1 <=1000:
-            print(stck)
-            stc.append(stck)
+            mx = max(list(set_clse))
+            if clse > mx:
+                print(stck)
+                stc.append(stck)
     except:
         pass        
     

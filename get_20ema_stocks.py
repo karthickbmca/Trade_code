@@ -20,7 +20,7 @@ import pandas as pd
 
 
 end = datetime.date.today()
-end = end - timedelta(days = 1)
+#end = end - timedelta(days = 2)
 
 data_year = pd.read_excel("E:\Trade\Raw_data\\data_oneYear_EMA.xlsx")
 nse = Nse()

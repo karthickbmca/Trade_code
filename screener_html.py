@@ -42,7 +42,7 @@ nse = Nse()
 #q = nse.get_quote('infy')
 all_stock_codes = nse.get_stock_codes() 
 #all_stock_codes = pd.read_csv(r'E:\Trade\profit_list\profit_stocks08072022.txt')
-all_stock_codes = ['infy']
+#all_stock_codes = ['infy']
 for stock in all_stock_codes:
     print(stock)
     try:
@@ -176,11 +176,11 @@ for stock in all_stock_codes:
          
     except:
         time.sleep(1)
-        continue
+        pass
     
 df_screener = pd.DataFrame.from_dict(d, orient = 'index')
 df_screener.columns = ['prev_qtr_sales','curr_qtr_sales','perc_imp_sales','prev_qtr_oprPro','curr_qtr_oprPro','perc_imp_oprPro','prev_qtr_NetPro','curr_qtr_NetPro','perc_imp_NetPro','prev_anl_sales','curr_anl_sales','perc_imp_sales_anl','prev_anl_oprPro','curr_anl_oprPro','perc_imp_oprPro_anl','prev_anl_NetPro','curr_anl_NetPro','perc_imp_NetPro_anl','public_holding']
-#df_screener.to_excel("E:\Trade\Analysis\\screener_data_all.xlsx")
+df_screener.to_excel("E:\Trade\Analysis\\screener_data_partial_jan_2023_upd.xlsx")
 
         
             
