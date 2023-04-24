@@ -74,12 +74,12 @@ def get_date(d):
     return dat
         
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30)]
 
 dic_profit_shares = {}
 dic_stck = {}
 end = datetime.date.today()
-#end = end - timedelta(days = 2)
+end = end - timedelta(days = 1)
 
 yes_date = get_date(end)
 start = get_date(yes_date)
@@ -262,9 +262,31 @@ for stck in stock:
             stc.append(stck)
     except:
         pass        
-    
+   
 watch_list = list(set(less_than_one_perc).union(set(stc))  )
 shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in watch_list})
+smart_list = [] 
+for stock in watch_list:
+    try:
+        close = float(data_y[(data_year['Date'] ==  end.strftime('%Y-%m-%d')) & (data_y['Symbol'] == stock)]['Close'])
+        slice_data = data_y[data_y['Symbol'] == stock]
+        twenty_ema = ta.ema(slice_data['Close'],length=20).to_list()[-1]
+        fif_ema = ta.ema(slice_data['Close'],length=50).to_list()[-1]
+        hund_ema = ta.ema(slice_data['Close'],length=100).to_list()[-1]
+        two_hund_ema = ta.ema(slice_data['Close'],length=200).to_list()[-1]
+        if close >= twenty_ema:
+            if twenty_ema >= fif_ema >= hund_ema>=two_hund_ema:
+                smart_list.append(stock)
+            #perc = ((close - twenty_ema) /close) * 100
+            #if perc >= -1:
+                
+                
+    except:
+        continue
+smart_shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in smart_list})
+
 pathlib.Path(r"E:\Trade\watch_list\watch_list" + end.strftime('%d%m%Y') +".txt").write_text(shares_top_prior)
+pathlib.Path(r"E:\Trade\smart_list\smart_list" + end.strftime('%d%m%Y') +".txt").write_text(smart_shares_top_prior)
 print('profit Stocks - '+str(len(fil_dic)))
 print('watch list stocks - '+ str(len(watch_list)))
+print('smart list stocks - '+ str(len(smart_list)))
