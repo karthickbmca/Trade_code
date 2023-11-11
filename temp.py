@@ -15,6 +15,8 @@ import os
 import pathlib
 import re
 import pandas as pd
+import nselib
+from nselib import capital_market
 
 def isdoji(opn,clos):
     res = (clos - opn)/clos * 100
@@ -72,6 +74,12 @@ def get_date(d):
         dat = get_date(yes_date)
     
     return dat
+
+def comma(val):
+    if ',' in val:
+        return val.replace(',','')
+    else:
+        return val
         
 data = pd.DataFrame()
 leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30)]
@@ -89,15 +97,26 @@ print(start,yes_date,end)
 #start = datetime.date(2022,10,31)
 nse = Nse()
 #q = nse.get_quote('infy')
-all_stock_codes = nse.get_stock_codes() 
+all_stock_codes = nselib.capital_market.equity_list()['SYMBOL']
 for stock in all_stock_codes:
     try:
         print(stock)
-        df_data = get_history(symbol = stock, start = start, end = end)
-        df_data['type_candle'] = df_data.apply(lambda row: 'bull' if (row['Close'] > row['Open']) else 'bear', axis = 1)
+        df_data = capital_market.price_volume_and_deliverable_position_data(symbol=stock, from_date=start.strftime('%d-%m-%Y'), to_date=end.strftime('%d-%m-%Y'))
+        df_data['type_candle'] = df_data.apply(lambda row: 'bull' if (row['ClosePrice'] > row['OpenPrice']) else 'bear', axis = 1)
         data = pd.concat([data,df_data]) 
     except:
         continue
+data.rename(columns = {'OpenPrice':'Open','HighPrice':'High','LowPrice':'Low','ClosePrice':'Close'},inplace=True)
+data['Date'] = pd.to_datetime(data.Date, format='%d-%b-%Y')
+chnge_list = ['Open','High','Low','Close']
+for chg in chnge_list:
+    
+    data[chg] = data[chg].replace(',', '', regex=True)
+    data[chg] = data[chg].astype(float)
+#data['High'] = data['High'].astype(float)
+#data['Low'] = data['Low'].astype(float)
+#data['Close'] = data['Close'].astype(float)
+
 data['spinng_top'] = talib.CDLSPINNINGTOP(data['Open'].values, data['High'].values, data['Low'].values, data['Close'].values)
 # data['hanging_man'] = talib.CDLHANGINGMAN(data['Open'].values, data['High'].values, data['Low'].values, data['Close'].values)
 # data['hammer'] = talib.CDLHANGINGMAN(data['Open'].values, data['High'].values, data['Low'].values, data['Close'].values)
