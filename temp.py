@@ -87,15 +87,16 @@ leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9
 dic_profit_shares = {}
 dic_stck = {}
 end = datetime.date.today()
-end = end - timedelta(days = 1)
+#end = end - timedelta(days = 1)
 
 yes_date = get_date(end)
 start = get_date(yes_date)
 print(start,yes_date,end)
     #yes_date = yes_date + timedelta(days = 2)
-#yes_date = datetime.date(2022,8,16)
-#start = datetime.date(2022,10,31)
-nse = Nse()
+#yes_date = datetime.date(2023,11,10)
+#start = datetime.date(2023,11,9)
+#end = datetime.date(2023,11,12)
+#nse = Nse()
 #q = nse.get_quote('infy')
 all_stock_codes = nselib.capital_market.equity_list()['SYMBOL']
 for stock in all_stock_codes:
@@ -287,7 +288,7 @@ shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in watch_list}
 smart_list = [] 
 for stock in watch_list:
     try:
-        close = float(data_y[(data_year['Date'] ==  end.strftime('%Y-%m-%d')) & (data_y['Symbol'] == stock)]['Close'])
+        close = float(data_y[(data_y['Date'] ==  end.strftime('%Y-%m-%d')) & (data_y['Symbol'] == stock)]['Close'])
         slice_data = data_y[data_y['Symbol'] == stock]
         twenty_ema = ta.ema(slice_data['Close'],length=20).to_list()[-1]
         fif_ema = ta.ema(slice_data['Close'],length=50).to_list()[-1]
