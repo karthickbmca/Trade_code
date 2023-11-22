@@ -82,7 +82,7 @@ def comma(val):
         return val
         
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30),datetime.date(2023,11,14)]
 
 dic_profit_shares = {}
 dic_stck = {}
@@ -225,6 +225,7 @@ for stck in stock:
         fifty_ema = ta.ema(slice_data['Close'],length=50).to_list()[-1]
         hundred_ema = ta.ema(slice_data['Close'],length=100).to_list()[-1]
         two_hund_ema = ta.ema(slice_data['Close'],length=200).to_list()[-1]
+        #ten_ma = ta.ma(slice_data['Close'],length=10).to_list()[-1]
         dic_stck[stck] = [twenty_ema,fifty_ema,hundred_ema,two_hund_ema]
     except:
         continue
@@ -286,6 +287,7 @@ for stck in stock:
 watch_list = list(set(less_than_one_perc).union(set(stc))  )
 shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in watch_list})
 smart_list = [] 
+very_smart_list = []
 for stock in watch_list:
     try:
         close = float(data_y[(data_y['Date'] ==  end.strftime('%Y-%m-%d')) & (data_y['Symbol'] == stock)]['Close'])
@@ -294,9 +296,14 @@ for stock in watch_list:
         fif_ema = ta.ema(slice_data['Close'],length=50).to_list()[-1]
         hund_ema = ta.ema(slice_data['Close'],length=100).to_list()[-1]
         two_hund_ema = ta.ema(slice_data['Close'],length=200).to_list()[-1]
+        ten_ma = ta.sma(slice_data['Close'],length=10).to_list()[-1]
+        tight = ten_ma - twenty_ema
         if close >= twenty_ema:
             if twenty_ema >= fif_ema >= hund_ema>=two_hund_ema:
                 smart_list.append(stock)
+                if (tight <=1) & (tight >= -1):
+                    very_smart_list.append(stock)
+            
             #perc = ((close - twenty_ema) /close) * 100
             #if perc >= -1:
                 
@@ -304,9 +311,12 @@ for stock in watch_list:
     except:
         continue
 smart_shares_top_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in smart_list})
+top_most_prior = ','.join({'NSE:'+re.sub('[&-]','_',key)for key in very_smart_list})
 
 pathlib.Path(r"E:\Trade\watch_list\watch_list" + end.strftime('%d%m%Y') +".txt").write_text(shares_top_prior)
 pathlib.Path(r"E:\Trade\smart_list\smart_list" + end.strftime('%d%m%Y') +".txt").write_text(smart_shares_top_prior)
+pathlib.Path(r"E:\Trade\smart_list\very_smart_list" + end.strftime('%d%m%Y') +".txt").write_text(top_most_prior)
 print('profit Stocks - '+str(len(fil_dic)))
 print('watch list stocks - '+ str(len(watch_list)))
 print('smart list stocks - '+ str(len(smart_list)))
+print('very smart list stocks - '+ str(len(very_smart_list)))
