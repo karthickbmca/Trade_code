@@ -12,12 +12,12 @@ from win32com.client import Dispatch
 from nsetools import Nse
 speaker = Dispatch("SAPI.spVoice")
 nse = Nse()
-dic_stock_name = nse.get_stock_codes()
-df = pd.read_excel(r'D:\Trade\Analysis\live_23092021.xlsx')
+#dic_stock_name = nse.get_stock_codes()
+#df = pd.read_excel(r'D:\Trade\Analysis\live_23092021.xlsx')
 
 #df.rename(columns = {'Unnamed: 0':'Symbol'},inplace = True)
 #list_stcoks = df[df['Trend'] == '4 neg continues']['Symbol'].tolist()
-list_stcoks = df['Symbol'].tolist()
+#list_stcoks = df['Symbol'].tolist()
 #list_stcoks  = ['orienthot']
 dic_stocks = {}
 
@@ -53,10 +53,10 @@ dic_stocks = {}
             
     
 for _ in range(1):
-    for stock_symbol in list_stcoks:
+    for stock_symbol in ['sbin']:
         try:
-            high = float(df[df['Symbol'] == stock_symbol]['High'])
-            stock_url = 'https://www.nseindia.com/live_market/dynaContent/live_watch/get_quote/GetQuote.jsp?symbol='+str(stock_symbol)
+            high = 633
+            stock_url = 'https://www.nseindia.com/get-quotes/equity?symbol='+str(stock_symbol)
             headers = {'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'}
             response = requests.get(stock_url, headers=headers)
             soup = BeautifulSoup(response.text, 'html.parser')
