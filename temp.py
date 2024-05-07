@@ -85,17 +85,19 @@ def comma(val):
         return val
         
 data = pd.DataFrame()
-leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30),datetime.date(2023,11,14),datetime.date(2023,11,27),datetime.date(2023,12,25),datetime.date(2024,1,22),datetime.date(2024,1,26)]
+leave = [datetime.date(2022,1,26),datetime.date(2022,5,3),datetime.date(2022,8,9),datetime.date(2022,8,11),datetime.date(2022,8,15),datetime.date(2022,8,31),datetime.date(2022,10,5),datetime.date(2022,10,26),datetime.date(2022,11,8),datetime.date(2023,1,26),datetime.date(2023,3,7),datetime.date(2023,3,30),datetime.date(2023,11,14),datetime.date(2023,11,27),datetime.date(2023,12,25),datetime.date(2024,1,22),datetime.date(2024,1,26),datetime.date(2024,3,8),datetime.date(2024,3,28)]
 
 dic_profit_shares = {}
 dic_stck = {}
 end = datetime.date.today()
 #end = end - timedelta(days = md)
+#end = end - timedelta(days = 3)
+
 
 yes_date = get_date(end)
 #yes_date = end - timedelta(days = 3)
 start = get_date(yes_date)
-#start = end - timedelta(days = 4)
+#start = end - timedelta(days = 6)
 print(start,yes_date,end)
     #yes_date = yes_date + timedelta(days = 2)
 #yes_date = datetime.date(2023,11,10)
